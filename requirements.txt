@@ -1,0 +1,13 @@
+langchain
+langchain-core
+langchain-community
+langchain-chroma
+
+chromadb
+
+langchain-google-genai
+
+python-dotenv
+protobuf
+fastapi
+uvicorn
