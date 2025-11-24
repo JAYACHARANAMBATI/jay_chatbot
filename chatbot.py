@@ -6,8 +6,15 @@ from functools import lru_cache
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
+
+# Compatible imports: some langchain releases split API across `langchain` and `langchain_core`.
+try:
+    from langchain.chains import ConversationalRetrievalChain
+    from langchain.memory import ConversationBufferMemory
+except Exception:
+    from langchain_core.chains import ConversationalRetrievalChain
+    from langchain_core.memory import ConversationBufferMemory
+
 from langchain_core.prompts import ChatPromptTemplate
 
 load_dotenv()
