@@ -10,15 +10,15 @@ __pycache__/
 *.pyo
 *.pyd
 
-# OS files
+
 .DS_Store
 
-# Log files
+
 *.log
 
-# IDE
+
 .vscode/
 .idea/
 
-# Cache
+
 .cache/
