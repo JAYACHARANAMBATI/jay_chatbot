@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import VoyageEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.documents import Document  
 from pinecone import Pinecone
