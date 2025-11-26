@@ -2,20 +2,21 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from pydantic import BaseModel
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.documents import Document  
+from langchain_core.documents import Document
 from pinecone import Pinecone
+from huggingface_hub import InferenceClient
 
 
 load_dotenv()
 
-
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+HF_API_KEY = os.getenv("HF_API_KEY")
 
 INDEX_NAME = "rag-index"
-EMBED_MODEL = "sentence-transformers/paraphrase-MiniLM-L3-v2"
+HF_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
 
 app = FastAPI(title="RAG Chatbot API")
 
@@ -27,28 +28,43 @@ llm = ChatGoogleGenerativeAI(
 )
 
 
+hf_client = InferenceClient(token=HF_API_KEY)
 
-embedder = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+def embed_text(text: str):
+    """
+    Get embedding from HuggingFace Inference API
+    Returns a flat 1D Python list for Pinecone
+    """
+    embedding = hf_client.feature_extraction(text, model=HF_MODEL)
+    
+    
+    if isinstance(embedding[0], list):
+        embedding = embedding[0]
+
+    
+    embedding = [float(x) for x in embedding]
+    
+    return embedding
 
 
 pc = Pinecone(api_key=PINECONE_API_KEY)
 index = pc.Index(INDEX_NAME)
 
 
-
 class QueryRequest(BaseModel):
     query: str
 
 
+def retrieve_docs(query: str):
+    query_vector = embed_text(query)
 
-def retrieve_docs(query):
-    query_vector = embedder.embed_query(query)
 
     results = index.query(
         vector=query_vector,
         top_k=5,
         include_metadata=True
     )
+
 
     docs = []
     for match in results["matches"]:
@@ -58,8 +74,8 @@ def retrieve_docs(query):
     return docs
 
 
-
-def rag_chat(query):
+def rag_chat(query: str):
+    
     docs = retrieve_docs(query)
     context = "\n\n".join([d.page_content for d in docs])
 
@@ -67,18 +83,26 @@ def rag_chat(query):
     with open("system_prompt.txt", "r", encoding="utf-8") as f:
         prompt_template = f.read()
 
+    
     prompt = prompt_template.format(context=context, query=query)
+
+    
     response = llm.invoke(prompt)
     return response.content
 
 
-
 @app.post("/chat")
 async def chat(request: QueryRequest):
+    """
+    Accepts a POST request with a 'query' field,
+    returns RAG response.
+    """
     answer = rag_chat(request.query)
     return {"response": answer}
 
-
 @app.get("/")
 async def home():
+    """
+    Simple health check endpoint
+    """
     return {"message": "RAG chatbot running successfully!"}
