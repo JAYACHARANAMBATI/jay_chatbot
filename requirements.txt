@@ -1,7 +1,11 @@
 fastapi
 uvicorn
 python-dotenv
-pinecone
+pinecone-
 langchain-core
-langchain-community
-huggingface_hub
+langchain-text-splitters
+langchain-google-genai
+huggingface-hub
+pdfplumber
+numpy
+pydantic
