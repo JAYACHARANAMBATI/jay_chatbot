@@ -85,6 +85,5 @@ for i, chunk in enumerate(chunks):
         "metadata": {"text": chunk}
     })
 
-# Upload to Pinecone
 index.upsert(vectors)
 print("Pinecone DB build completed successfully!")
