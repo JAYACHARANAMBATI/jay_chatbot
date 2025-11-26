@@ -15,7 +15,7 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 INDEX_NAME = "rag-index"
-EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+EMBED_MODEL = "sentence-transformers/paraphrase-MiniLM-L3-v2"
 
 app = FastAPI(title="RAG Chatbot API")
 
@@ -25,6 +25,7 @@ llm = ChatGoogleGenerativeAI(
     google_api_key=GOOGLE_API_KEY,
     temperature=0.2
 )
+
 
 
 embedder = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
