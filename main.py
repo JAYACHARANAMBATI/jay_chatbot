@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.documents import Document
@@ -15,10 +16,19 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 HF_API_KEY = os.getenv("HF_API_KEY")
 
 INDEX_NAME = "rag-index"
-HF_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+HF_MODEL = "sentence-transformers/paraphrase-MiniLM-L3-v2"
 
 
 app = FastAPI(title="RAG Chatbot API")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"],  
+)
 
 
 llm = ChatGoogleGenerativeAI(
@@ -31,10 +41,6 @@ llm = ChatGoogleGenerativeAI(
 hf_client = InferenceClient(token=HF_API_KEY)
 
 def embed_text(text: str):
-    """
-    Get embedding from HuggingFace Inference API
-    Returns a flat 1D Python list for Pinecone
-    """
     embedding = hf_client.feature_extraction(text, model=HF_MODEL)
     
     
@@ -61,7 +67,7 @@ def retrieve_docs(query: str):
 
     results = index.query(
         vector=query_vector,
-        top_k=5,
+        top_k=15,
         include_metadata=True
     )
 
@@ -93,16 +99,9 @@ def rag_chat(query: str):
 
 @app.post("/chat")
 async def chat(request: QueryRequest):
-    """
-    Accepts a POST request with a 'query' field,
-    returns RAG response.
-    """
     answer = rag_chat(request.query)
     return {"response": answer}
 
 @app.get("/")
 async def home():
-    """
-    Simple health check endpoint
-    """
     return {"message": "RAG chatbot running successfully!"}
